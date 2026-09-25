@@ -1,0 +1,95 @@
+/*
+ * NUEVO: css/avatar.css
+ * Dibujo y animación (solo fundido, sin animaciones especiales) del avatar
+ * de Lumi. Dibujado en CSS puro (sin imágenes) en naranja + negro, acorde
+ * a la estética de Lumi. Posición: esquina inferior derecha, junto al chat,
+ * sin estorbar el composer. Responsive y no interactivo.
+ */
+.lumi-avatar{
+  position:fixed;
+  right:16px;
+  bottom:96px;
+  width:56px;
+  height:56px;
+  border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,#ffb066,#e8672a 65%,#c9501c);
+  box-shadow:0 8px 24px #0007;
+  display:grid;
+  place-items:center;
+  z-index:40;
+  opacity:0;
+  transform:translateY(6px) scale(.95);
+  transition:opacity .22s ease,transform .22s ease;
+  pointer-events:none; /* no se puede tocar / interactuar */
+}
+.lumi-avatar.la-visible{opacity:1;transform:translateY(0) scale(1);}
+.lumi-avatar-face{position:relative;width:32px;height:32px;}
+.la-eye{position:absolute;top:12px;width:6px;height:6px;border-radius:50%;background:#1a1006;transition:height .15s ease,transform .15s ease;}
+.la-eye-l{left:6px;}
+.la-eye-r{right:6px;}
+.la-mouth{position:absolute;left:50%;top:19px;width:12px;height:5px;border-radius:0 0 10px 10px;border-bottom:2px solid #1a1006;transform:translateX(-50%);transition:all .15s ease;}
+
+/* 1. Feliz */
+.lumi-avatar.la-feliz .la-mouth{border-radius:0 0 10px 10px;height:5px;}
+
+/* 2. Riendo */
+.lumi-avatar.la-riendo .la-eye{height:2px;top:14px;border-radius:2px;}
+.lumi-avatar.la-riendo .la-mouth{width:14px;height:8px;border-radius:0 0 14px 14px;border-width:2.5px;}
+
+/* 3. Sorprendida */
+.lumi-avatar.la-sorprendida .la-eye{height:8px;width:8px;top:10px;}
+.lumi-avatar.la-sorprendida .la-mouth{width:8px;height:8px;border-radius:50%;border:2px solid #1a1006;}
+
+/* 4. Triste */
+.lumi-avatar.la-triste .la-eye{top:14px;}
+.lumi-avatar.la-triste .la-mouth{border-radius:10px 10px 0 0;border-bottom:0;border-top:2px solid #1a1006;top:22px;}
+
+/* 5. Enojada */
+.lumi-avatar.la-enojada .la-eye{height:3px;border-radius:2px;transform:rotate(-10deg);}
+.lumi-avatar.la-enojada .la-eye-r{transform:rotate(10deg);}
+.lumi-avatar.la-enojada .la-mouth{border-radius:10px 10px 0 0;border-bottom:0;border-top:2.5px solid #1a1006;top:22px;width:10px;}
+
+/* 6. Pensativa */
+.lumi-avatar.la-pensativa .la-eye-r{top:10px;}
+.lumi-avatar.la-pensativa .la-mouth{width:8px;transform:translateX(-30%);}
+
+/* 7. Dormida */
+.lumi-avatar.la-dormida .la-eye{height:2px;top:14px;border-radius:2px;}
+.lumi-avatar.la-dormida .la-mouth{width:6px;height:3px;border-radius:50%;border:0;background:#1a1006;}
+
+/* 8. Emocionada */
+.lumi-avatar.la-emocionada .la-eye{height:7px;width:7px;top:11px;}
+.lumi-avatar.la-emocionada .la-mouth{width:14px;height:9px;border-radius:0 0 14px 14px;border-width:2.5px;}
+
+/* 9. Saludando (sin emoji: se dibuja una mano con CSS puro) */
+.lumi-avatar.la-saludando .la-mouth{width:13px;border-radius:0 0 12px 12px;}
+.lumi-avatar.la-saludando .la-hand{
+  position:absolute;top:-8px;right:-6px;width:14px;height:14px;border-radius:4px 4px 8px 8px;
+  background:#ffb066;border:1.5px solid #1a1006;
+  transform-origin:bottom left;animation:la-wave 1s ease-in-out infinite;
+}
+@keyframes la-wave{0%,100%{transform:rotate(-8deg)}50%{transform:rotate(22deg)}}
+
+/* === TEMPORAL animado: respiración + parpadeo + brillo orbital === */
+.lumi-avatar.la-visible{animation:la-breathe 2.6s ease-in-out infinite;}
+.lumi-avatar-face{animation:la-bob 2.6s ease-in-out infinite;}
+.la-eye{animation:la-blink 4.2s ease-in-out infinite;}
+.la-eye-r{animation-delay:.02s;}
+.lumi-avatar::before{
+  content:'';position:absolute;inset:-3px;border-radius:50%;
+  background:conic-gradient(from 0deg,#e8672a00,#e8672a88,#ffb06600 40%);
+  animation:la-orbit 2.4s linear infinite;pointer-events:none;
+}
+@keyframes la-breathe{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-3px) scale(1.03)}}
+@keyframes la-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-1.5px)}}
+@keyframes la-blink{0%,94%,100%{transform:scaleY(1)}96%{transform:scaleY(.08)}}
+@keyframes la-orbit{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){
+  .lumi-avatar.la-visible,.lumi-avatar-face,.la-eye,.lumi-avatar::before,
+  .lumi-avatar.la-saludando .la-hand{animation:none!important;}
+}
+
+@media(max-width:480px){
+  .lumi-avatar{width:46px;height:46px;right:10px;bottom:84px;}
+  .lumi-avatar-face{width:26px;height:26px;}
+}
