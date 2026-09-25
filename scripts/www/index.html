@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="es" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+  <meta name="theme-color" content="#0b0d10">
+  <meta name="description" content="Lumi — asistente personal">
+  <script>
+    // El manifest solo se solicita en orígenes web. Así no genera errores CORS
+    // cuando se abre index.html directamente como file:// durante pruebas.
+    if (location.protocol === 'http:' || location.protocol === 'https:') {
+      var manifestLink = document.createElement('link');
+      manifestLink.rel = 'manifest';
+      manifestLink.href = 'manifest.json';
+      document.head.appendChild(manifestLink);
+    }
+  </script>
+  <link rel="icon" href="assets/icons/lumi.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/chat.css">
+  <link rel="stylesheet" href="css/sidebar.css">
+  <link rel="stylesheet" href="css/modals.css">
+  <link rel="stylesheet" href="css/onboarding.css">
+  <link rel="stylesheet" href="css/themes.css">
+  <link rel="stylesheet" href="css/avatar.css">
+  <title>Lumi</title>
+  <script>
+    // Limpia cualquier Service Worker antiguo de versiones previas de Lumi.
+    // Esto evita que un sw.js viejo intercepte peticiones y provoque "Failed to fetch".
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function () {
+        navigator.serviceWorker.getRegistrations().then(function (regs) {
+          return Promise.all(regs.map(function (reg) { return reg.unregister(); }));
+        }).then(function () {
+          if (window.caches) {
+            return caches.keys().then(function (keys) {
+              return Promise.all(keys.map(function (key) { return caches.delete(key); }));
+            });
+          }
+        }).catch(function () {});
+      });
+    }
+  </script>
+</head>
+<body>
+<div id="app" class="app-shell">
+  <div id="offlineBanner" class="offline-banner" hidden></div>
+  <aside id="sidebar" class="sidebar" aria-label="Menú principal">
+    <div class="sidebar-head">
+      <button class="icon-btn" data-action="close-sidebar" aria-label="Cerrar menú"><span class="svg-icon" data-icon="close"></span></button>
+      <button class="profile-mini" data-action="open-settings"><span id="sideAvatar" class="avatar-dot">L</span><span><b id="sideUser">Tú</b><small id="sideLevel">Cuenta</small></span></button>
+    </div>
+    <button class="new-chat" data-action="new-chat"><span class="svg-icon" data-icon="plus"></span> Nueva conversación</button>
+    <div class="side-section"><div class="side-title">Proyectos</div><div id="projectList" class="project-list"></div><button class="side-add" data-action="new-project"><span class="svg-icon" data-icon="plus"></span> Nuevo proyecto</button></div>
+    <div class="side-spacer"></div>
+    <div class="side-bottom"><button data-action="show-tutorial"><span class="svg-icon" data-icon="help"></span> Tutorial</button><button data-action="open-settings"><span class="svg-icon" data-icon="settings"></span> Ajustes</button><button data-action="logout"><span class="svg-icon" data-icon="logout"></span> Cerrar sesión</button></div>
+  </aside>
+  <div id="sidebarBackdrop" class="sidebar-backdrop" data-action="close-sidebar"></div>
+
+  <main class="main-view">
+    <header class="topbar">
+      <button class="icon-btn" data-action="open-sidebar" aria-label="Abrir menú"><span class="svg-icon" data-icon="menu"></span></button>
+      <div class="top-title"><span id="conversationTitle">Nueva conversación</span><button class="mode-pill" id="modePill" data-action="change-mode">Asistente <span class="chev">⌄</span></button></div>
+      <button class="icon-btn" data-action="open-settings" aria-label="Ajustes"><span class="svg-icon" data-icon="settings"></span></button>
+    </header>
+
+    <section id="chatView" class="chat-view" aria-live="polite">
+      <div id="emptyState" class="empty-state"><div class="lumi-mark"><span class="svg-icon" data-icon="spark"></span></div><h1>Hola, soy Lumi</h1><p>Estoy aquí para acompañarte. ¿Qué hacemos hoy?</p><div class="quick-actions"><button data-action="quick" data-text="Ayúdame a organizar mi día">Organizar mi día</button><button data-action="quick" data-text="Quiero estudiar algo">Estudiar</button><button data-action="quick" data-text="Quiero enseñarte una regla">Enseñarte algo</button></div></div>
+      <div id="messages" class="messages"></div>
+      <div id="typingIndicator" class="typing-indicator" hidden><span></span><span></span><span></span><em>Lumi está escribiendo…</em></div>
+    </section>
+
+    <footer class="composer-wrap">
+      <div id="stopWrap" class="stop-wrap" hidden><button data-action="stop"><span class="svg-icon" data-icon="stop"></span> Detener respuesta</button></div>
+      <form id="composer" class="composer">
+        <button type="button" class="icon-btn composer-tool" data-action="future-attach" title="Adjuntar archivo"><span class="svg-icon" data-icon="paperclip"></span></button>
+        <textarea id="messageInput" rows="1" maxlength="12000" placeholder="Escribe a Lumi…" autocomplete="off"></textarea>
+        <button type="submit" class="send-btn" aria-label="Enviar"><span class="svg-icon" data-icon="send"></span></button>
+      </form>
+      <div class="composer-note">Lumi puede equivocarse. Comprueba la información importante.</div>
+    </footer>
+  </main>
+</div>
+
+<!-- Templates: todas las pantallas viven en este mismo HTML para facilitar el empaquetado -->
+<template id="tpl-auth"><div class="screen-card auth-card"><div class="lumi-mark"><span class="svg-icon" data-icon="spark"></span></div><h1>Bienvenido a Lumi</h1><p class="muted">Tu espacio personal para conversar, estudiar y aprender juntos.</p><div class="tabs"><button class="active" data-auth-tab="login">Entrar</button><button data-auth-tab="register">Crear cuenta</button></div><form id="authForm"><label>Correo<input id="authEmail" type="email" required autocomplete="email"></label><label>Contraseña<input id="authPassword" type="password" required minlength="6" autocomplete="current-password"></label><button class="primary-btn" type="submit" id="authSubmit">Entrar</button></form><button class="text-btn" data-action="recover-account">¿Olvidaste tu contraseña?</button><p id="authError" class="error-text"></p></div></template>
+
+<template id="tpl-settings"><div class="modal-panel settings-panel"><div class="modal-head"><h2>Ajustes</h2><button class="icon-btn" data-action="close-modal"><span class="svg-icon" data-icon="close"></span></button></div><div class="settings-list"><section><h3>Tu perfil</h3><label>Nombre de usuario<input id="setUsername"></label><label>Cómo llamar a Lumi<input id="setLumiName"></label><button class="row-btn" data-action="save-profile">Guardar cambios</button></section><section><h3>Preferencias</h3><label class="switch-row">Notificaciones<input id="setNotifications" type="checkbox"><span class="switch"></span></label><label class="switch-row">Lumi puede escribir sola<input id="setAutoMessage" type="checkbox"><span class="switch"></span></label><label class="switch-row">Jerga cubana<input id="setCubanSlang" type="checkbox"><span class="switch"></span></label><label class="switch-row">Modo solo escuchar<input id="setListenMode" type="checkbox" data-action="toggle-listen-mode"><span class="switch"></span></label><label>Idioma de la APK<select id="setLanguage"><option value="es">Español</option><option value="en">English</option></select></label></section><section><h3>Seguridad</h3><button class="row-btn" data-action="set-secret">Cambiar código secreto</button><button class="row-btn" data-action="change-password">Cambiar contraseña</button><button class="row-btn" data-action="change-email">Cambiar correo</button></section><section><h3>Datos</h3><button class="row-btn" data-action="show-memory">Preguntar qué recuerda Lumi</button><button class="row-btn" data-action="show-lists">Mis listas</button><button class="row-btn" data-action="reset-learning">Reiniciar aprendizaje de Lumi</button><button class="row-btn danger" data-action="delete-account">Eliminar cuenta</button></section><section><h3>Plan</h3><p class="muted">Tu plan actual: <b id="setPlanLabel">Gratis</b></p></section><section><h3>Ayuda</h3><button class="row-btn" data-action="show-tutorial">Ver tutorial de nuevo</button></section></div></div></template>
+
+<template id="tpl-mode"><div class="modal-panel small-panel"><div class="modal-head"><h2>Modo de Lumi</h2><button class="icon-btn" data-action="close-modal"><span class="svg-icon" data-icon="close"></span></button></div><button class="mode-option" data-mode="assistant"><b>Asistente</b><span>Amigable y cercano para el día a día.</span></button><button class="mode-option" data-mode="study"><b>Estudio</b><span>Formal, profundo y orientado a investigación y clases.</span></button><button class="mode-option" data-mode="learning"><b>Aprendizaje</b><span>Enséñame reglas y respuestas personalizadas.</span></button></div></template>
+
+<template id="tpl-secret"><div class="modal-panel small-panel"><div class="modal-head"><h2>Código secreto</h2><button class="icon-btn" data-action="close-modal"><span class="svg-icon" data-icon="close"></span></button></div><p class="muted">Protege recuerdos y acciones sensibles. Debe tener 8 dígitos.</p><input id="secretInput" class="big-input" inputmode="numeric" maxlength="8" placeholder="00000000"><button class="primary-btn" data-action="save-secret">Guardar código</button><button class="text-btn" data-action="recover-secret">Recuperar por correo</button></div></template>
+
+<template id="tpl-recovery"><div class="modal-panel small-panel"><div class="modal-head"><h2>Recuperar código</h2><button class="icon-btn" data-action="close-modal"><span class="svg-icon" data-icon="close"></span></button></div><p class="muted">Te enviaremos un nuevo código de 8 dígitos al correo de recuperación configurado.</p><input id="recoveryEmail" type="email" placeholder="correo@example.com"><button class="primary-btn" data-action="send-recovery">Enviar código</button><div id="recoveryStep2" hidden><input id="recoveryCode" inputmode="numeric" maxlength="8" placeholder="Nuevo código de 8 dígitos"><button class="primary-btn" data-action="apply-recovery">Aplicar nuevo código</button></div></div></template>
+
+<template id="tpl-project"><div class="modal-panel small-panel"><div class="modal-head"><h2>Nuevo proyecto</h2><button class="icon-btn" data-action="close-modal"><span class="svg-icon" data-icon="close"></span></button></div><input id="projectName" placeholder="Nombre del proyecto" maxlength="80"><button class="primary-btn" data-action="create-project">Crear proyecto</button></div></template>
+
+<template id="tpl-onboarding"><div class="onboarding"><div class="onboard-card"><div class="lumi-mark"><span class="svg-icon" data-icon="spark"></span></div><div class="onboard-progress"><i></i><i></i><i></i></div><div id="onboardContent"></div><div class="onboard-actions"><button class="text-btn" data-action="skip-onboarding">Saltar</button><button class="primary-btn" data-action="next-onboarding">Continuar</button></div></div></div></template>
+
+<div id="modalRoot" class="modal-root" hidden></div>
+<div id="authRoot" class="auth-root" hidden aria-modal="true" role="dialog"></div>
+<div id="toastRoot" class="toast-root"></div>
+
+<script src="js/config.js"></script>
+<script src="data/strings.js"></script>
+<script src="data/prompts.js"></script>
+<script src="js/supabase.js"></script>
+<script src="js/security.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/memory.js"></script>
+<script src="js/modes.js"></script>
+<script src="js/projects.js"></script>
+<script src="js/offline.js"></script>
+<script src="js/notifications.js"></script>
+<script src="js/openrouter.js"></script>
+<script src="js/plataformia.js"></script>
+<script src="js/ai-provider.js"></script>
+<script src="js/avatar.js"></script>
+<script src="js/reminders.js"></script>
+<script src="js/lists.js"></script>
+<script src="js/diary.js"></script>
+<script src="js/monetization.js"></script>
+<script src="js/tts.js"></script>
+<script src="js/chat.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/onboarding.js"></script>
+<script src="js/app.js"></script>
+</body></html>
