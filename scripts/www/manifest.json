@@ -1,0 +1,2 @@
+{
+  "name":"Lumi","short_name":"Lumi","description":"Asistente personal Lumi","start_url":"./index.html","display":"standalone","orientation":"portrait","background_color":"#0b0d10","theme_color":"#0b0d10","icons":[{"src":"assets/icons/lumi.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}]}
