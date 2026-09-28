@@ -1,0 +1,8 @@
+{
+  "name":"incognito-app",
+  "version":"1.1.0",
+  "private":true,
+  "description":"Incognito anonymous chat - vanilla HTML/CSS/JS prepared for Capacitor",
+  "scripts":{"serve":"npx serve .","check":"node --check js/navigation.js && node --check js/onboarding.js && node --check js/notifications.js && node --check js/chat.js && node --check js/app.js && node --check js/supabase.js"},
+  "dependencies":{"@capacitor/core":"latest","@capacitor/android":"latest","@capacitor/cli":"latest"}
+}
