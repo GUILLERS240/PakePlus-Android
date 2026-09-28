@@ -1,1 +1,1 @@
-Los iconos SVG inline y las categorías se incorporarán en las fases de interfaz.
+Los iconos principales se inyectan inline desde js/icons.js para cumplir el diseño sin dependencias externas.
